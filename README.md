@@ -27,7 +27,7 @@ A lightning-fast, multi-threaded port scanner built in Python.
 ```bash
 python reconwizard.py
 ```
-![image.png](ReconWizard.png)
+![image.png](Improved-Recon.png)
 ---
 ## 🔮 Future Roadmap
 
