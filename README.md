@@ -27,3 +27,14 @@ A lightning-fast, multi-threaded port scanner built in Python.
 ```bash
 python reconwizard.py
 ```
+![image.png](ReconWizard.png)
+---
+## 🔮 Future Roadmap
+
+These are the planned features and improvements for upcoming versions of ReconWizard:
+
+- [ ] 🏷️ **Banner Grabbing**  
+      Identify the service and version running on open ports.
+
+- [ ] 💾 **Save Results to File**  
+      Output scan
