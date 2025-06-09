@@ -1,53 +1,58 @@
 import socket
-import threading
-from concurrent.futures import ThreadPoolExecutor
-# Define the scanner
-def scan_port(ip,port_range):
+from concurrent.futures import ThreadPoolExecutor, as_completed
+from pyfiglet import figlet_format
+from colorama import Fore, Style, init
+from tqdm import tqdm
+
+init(autoreset=True)
+
+# Port scan function
+def scan_port(ip, port):
     try:
-        s=socket.socket()
+        s = socket.socket()
         s.settimeout(1)
-        s.connect((ip,port_range))
-        print(f"[+Port{port_range} is open]")
-        s.close()
+        s.connect((ip, port))
+        return port, True
     except:
-        pass
+        return port, False
+    finally:
+        s.close()
 
-# Pre defined values for the script, script requires either the user supplies ports to scan if not avail;aible then script will scan top1000 or top 10000 ports,
-#in order to do that script will load these ports list.
+# Banner
+print(figlet_format("ReconWizard", font="doom"))
 
-# Variables Required for script to execute
-ip = input("Enter ip:")
-print("Port:\n(1)Define Ports to scan\n(2)Use Top 1000\n(3)Use top 10000\nDefault scan all 65000 ports.")
-choice = input("Your Choice:")
-port_range=650001
+# User input
+ip = input("Enter IP address: ")
+print("Port options:\n(1) Define ports\n(2) Top 1000\n(3) Top 10000\n(Default scans all 65535 ports)")
+choice = input("Your choice: ")
 
-# Threading Control
+# Thread count
 try:
     max_threads = int(input("Enter number of threads (recommended: 100–1000): "))
-    if max_threads > 1001:
-        print("Capping threads to 1000 to avoid overload.")
+    if max_threads > 1000:
+        print("Capping threads to 1000.")
         max_threads = 1000
 except ValueError:
-    print("Invalid input. Using default of 100 threads.")
+    print("Invalid input. Using 100 threads.")
     max_threads = 100
 
-# Consequence of user Choice
+# Port list
+if choice == "1":
+    ports = input("Enter ports (comma-separated): ")
+    port_list = [int(p.strip()) for p in ports.split(",")]
+elif choice == "2":
+    port_list = list(range(1, 1001))
+elif choice == "3":
+    port_list = list(range(1, 10001))
+else:
+    print("Defaulting to all ports (1–65535).")
+    port_list = list(range(1, 65536))
+
+# Run scanner with tqdm progress bar
+open_ports = []
 with ThreadPoolExecutor(max_workers=max_threads) as executor:
-    if choice == "1":
-        ports = input("Enter ports (comma-separated): ")
-        port_list = [int(p.strip()) for p in ports.split(",")]
-        for port_range in port_list:
-            executor.submit(scan_port, ip, port_range)
-
-    elif choice == "2":
-        for port_range in range(1, 1001):
-            executor.submit(scan_port, ip, port_range)
-
-    elif choice == "3":
-        for port_range in range(1, 10001):
-            executor.submit(scan_port, ip, port_range)
-
-    else:
-        print("Invalid choice.")
-
-
+    future_to_port = {executor.submit(scan_port, ip, port): port for port in port_list}
+    for future in tqdm(as_completed(future_to_port), total=len(port_list), desc="Scanning", unit="port"):
+        port, is_open = future.result()
+        if is_open:
+            print(f"{Fore.GREEN}[+] Port {port} is OPEN{Style.RESET_ALL}")
